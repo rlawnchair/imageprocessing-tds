@@ -1,0 +1,24 @@
+ROOT=../..
+
+CC= gcc
+CFLAGS= -g -Wall -Wextra -std=c99 -I$(ROOT)/include
+LDFLAGS= -std=c99 -L$(ROOT)/lib -lbcl -lfftw3 -lm -lbcl 
+
+OBJ= fft.o test_fft_module.o
+
+all: test_fft_module
+
+test_fft_module: test_fft_module.o fft.o
+	$(CC) test_fft_module.o fft.o $(LDFLAGS) -o $@
+
+fft.o: fft.c fft.h
+test_fft_module.o: test_fft_module.c fft.h
+
+install : all
+	cp test_fft_module $(ROOT)/bin/
+
+clean :
+	rm -f $(OBJ) test_fft_module
+	rm -f *~
+
+

@@ -1,0 +1,112 @@
+#include "fft.h"
+/**
+ * @file test_fft_module.c
+ * @brief test the behaviors of functions in fft module
+ */
+
+
+/**
+ * @brief test the forward and backward functions
+ * @param pnm ims, the source image
+ * @param char* name, the image file name
+ */
+static void
+test_for_backward(pnm ims, char* name)
+{
+  int width = pnm_get_width(ims);
+  int height = pnm_get_height(ims);
+  pnm post_fourier = pnm_new(width, height,PnmRawPgm);
+
+  fftw_complex *fourier = fftw_malloc(width*height*sizeof(fftw_complex));
+  
+  unsigned short *image =  fftw_malloc(width*height*sizeof(unsigned short));
+
+  image = pnm_get_channel(ims, pnm_get_image(ims),0);
+
+  //transformation directe
+  fourier = fft_forward(height, width, image);
+
+  //transformation inverse
+  image = fft_backward(height, width, fourier);
+
+  //reconstruction de l'image
+  pnm_set_channel(post_fourier,image,PnmRed);
+  pnm_set_channel(post_fourier,image,PnmGreen);
+  pnm_set_channel(post_fourier,image,PnmBlue);
+
+  pnm_save(post_fourier,PnmRawPpm,"output.ppm");
+}
+
+/**
+ * @brief test the creation of amplitude and phase spectrum
+ *        and construct their images in ppm files
+ * @param pnm ims, the source image
+ * @param char* name, the image file name
+ */
+static void
+test_spectrum(pnm ims, char* name)
+{
+  int width = pnm_get_width(ims);
+  int height = pnm_get_height(ims);
+  pnm AS = pnm_new(width, height,PnmRawPgm);
+  pnm PS = pnm_new(width, height,PnmRawPgm);
+  pnm FB_ASPS = pnm_new(width, height,PnmRawPgm);
+  fftw_complex *fourier = fftw_malloc(width*height*sizeof(fftw_complex));  
+  unsigned short *image =  fftw_malloc(width*height*sizeof(unsigned short));
+  float *as = malloc(width*height*sizeof(float));
+  float *ps = malloc(width*height*sizeof(float));
+
+  image = pnm_get_channel(ims, pnm_get_image(ims),0);
+
+  fourier = fft_forward(height, width, image);
+  fft_fr_to_spectra(height, width, image, as, ps);
+  
+  image = fft_backward(height, width, fourier);
+
+
+  pnm_set_channel(post_fourier,image,PnmRed);
+  pnm_set_channel(post_fourier,image,PnmGreen);
+  pnm_set_channel(post_fourier,image,PnmBlue);
+
+  pnm_save(post_fourier,PnmRawPpm,"output.ppm");
+  fftw_free(fourier);
+}
+
+/**
+ * @brief test the modification of amplitude and phase spectrum and 
+ *        construct output images
+ * @param pnm ims, the source image
+ * @param char* name, the image file name
+ */
+static void
+test_modification(pnm ims, char* name)
+{
+  
+}
+
+
+static void 
+run(pnm ims, char* name)
+{
+  test_for_backward(ims, name);
+  test_spectrum(ims, name);
+  test_modification(ims, name);
+}
+
+
+void 
+usage (char *s)
+{
+  fprintf(stderr, "Usage: %s <input_name> \n", s);
+  exit(EXIT_FAILURE);
+}
+
+int 
+main(int argc, char *argv[])
+{
+  if (argc != 2)
+    usage(argv[0]);
+  pnm ims = pnm_load(argv[1]);
+  run(ims, argv[1]);
+  return EXIT_SUCCESS;
+}
